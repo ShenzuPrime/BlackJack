@@ -7,9 +7,10 @@ class Player{
   String password;
   int[] hand = new int[11];
   int balance;
-  //constructor for creating the player
+  //constructor
   Player(){
   }
+  //methdos
   void setName(String a){
     this.name = a;
   }
@@ -28,28 +29,32 @@ class Player{
   }
   void login(){
     try{
-      Class.forName("com.mysql.jdbc.Driver");
-      String query1 = "Select balance From testing.player where username = "+username+" and password = "+password;
-      String query2 = "Select name From testing.player where username = "+username+" and password = "+password;
+      Class.forName("com.mysql.cj.jdbc.Driver");
+      String query1 = "Select balance From testing.player where username = '"+username+"' and password = '"+password+"';";
+      String query2 = "Select name From testing.player where username = '"+username+"' and password = '"+password+"';";
       Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/testing","tester","test123");
       Statement stmt = con.createStatement();
       ResultSet rs = stmt.executeQuery(query1);
-      balance = rs.getInt(1);
+      if(rs.next()){
+        balance = rs.getInt(1);
+      }
       rs = stmt.executeQuery(query2);
-      name = rs.getString(1);
+      if(rs.next()){
+        name = rs.getString(1);
+      }
       con.close();
-      System.out.println("Welcome "+name+". Your current balance is: "+ balance);
+      System.out.println("Welcome "+name+". Your current balance is: "+balance);
     }catch(Exception e){
       System.out.println(e);
     }
   }
   void logout(){
     try{
-      Class.forName("com.mysql.jdbc.Driver");
-      String query = "";
+      Class.forName("com.mysql.cj.jdbc.Driver");
+      String query = "update testing.player set balance = "+balance+" where username = '"+username+"';";
       Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/testing","tester","test123");
       Statement stmt = con.createStatement();
-      stmt.executeQuery(query);
+      stmt.executeUpdate(query);
       con.close();
       System.out.println("Balance has been updated to: "+balance);
     }catch(Exception e){
@@ -78,18 +83,25 @@ public class Blackjack{
     player.setPassword(keyboard.nextLine());
 
     player.login();
-    if(player.balance>0) System.out.prinln("Time to begin the game");
 
+    if(player.balance>0){
+      System.out.println("Time to begin the game");
+    }
     boolean playing = true;
-
+    String check;
     //game logic
     while(player.balance > 0 && playing == true){
       System.out.println("Would you like to begin (Enter Z if you would like to Stop):");
-      if(keyboard.nextLine() == 'z' || keyboard.nextLine() == 'Z') break;
+      check = keyboard.nextLine();
+      if(check.equals("z") || check.equals("Z")){
+        playing = false;
+      }
+      //playing game
     }
-    if(player.balance > 0){
-      System.out.prinln("Thank you for playing, your balance will be saved, please play again.");
-      player.logout();
-    }
+    //game end
+    if(player.balance < 0) System.out.println("You have run out of balance, please add more");
+    System.out.println("Thank you for playing, your balance will be saved, please play again.");
+    player.logout();
+
   }
 }
