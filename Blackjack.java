@@ -12,20 +12,44 @@ class Player{
   }
   //methdos
   void setName(String a){
-    this.name = a;
+    name = a;
   }
   void setUsername(String a){
-    this.username = a;
+    username = a;
   }
   void setPassword(String a){
-    this.password = a;
+    password = a;
   }
   void setBalance(int a){
-    this.balance = a;
+    balance = a;
+  }
+  void bet(int a){
+    balance = balance - a;
+  }
+  void winning(int a){
+    balance = balance+(a*2);
+  }
+  int handTotal(){
+    int total=0;
+    for(int a=0; a<hand.length; a++){
+      total = total + hand[a];
+    }
+    return total;
+  }
+  void addToHand(int a){
+    boolean methodCheck = true;
+    int b = 0;
+    while(methodCheck == true){
+      if( hand[b] == 0){
+        hand[b] = a;
+        break;
+      }
+      b++;
+    }
   }
   void clearHand(){
     int[] newHand = new int[11];
-    this.hand = newHand;
+    hand = newHand;
   }
   void login(){
     try{
@@ -64,16 +88,28 @@ class Player{
   }
 }
 public class Blackjack{
-  String[] deck = new String[]{"A","2","3","4","5","6","7","8","9","10","J","Q","K"};
-/*
-  int draw(String[] a){
+  static int draw(char[] a,Player person){
+    Scanner keyboard1 = new Scanner(System.in);
     int b = (int)((Math.random()*13)+1);
-    System.out.println("You have drawn a "+a[b]);
-
-  } */
+    System.out.println("A"+a[b]+" was just drawn");
+    if(Character.isDigit(a[b])) return Character.getNumericValue(a[b]);
+    if(Character.isLetter(a[b])){
+      switch(a[b]){
+        case 'A':
+          if(person.handTotal()>10) return 1;
+          if(person.handTotal()<11) return 11;
+        default:
+          return 10;
+      }
+    }
+    else return 0;
+  }
   public static void main(String[] args){
+    char[] deck = new char[]{'A','2','3','4','5','6','7','8','9','T','J','Q','K'};
+    int gamble = 0;
     //creating player and scanner for keyboard
     Player player = new Player();
+    Player dealer = new Player();
     Scanner keyboard = new Scanner(System.in);
 
     //Prompting user to give information to log in
@@ -89,6 +125,7 @@ public class Blackjack{
     }
     boolean playing = true;
     String check;
+    String hitCheck;
     //game logic
     while(player.balance > 0 && playing == true){
       System.out.println("Would you like to begin (Enter Z if you would like to Stop):");
@@ -96,12 +133,59 @@ public class Blackjack{
       if(check.equals("z") || check.equals("Z")){
         playing = false;
       }
-      //playing game
+
+      System.out.println("Current balance is "+player.balance+" how much do you want to bet?:");
+      while(gamble == 0){
+        gamble = keyboard.nextInt();
+      }
+      player.bet(gamble);
+
+      System.out.println("The dealer is about to draw");
+      dealer.addToHand(draw(deck,dealer));
+      dealer.addToHand(draw(deck,dealer));
+      System.out.println("The Dealer's hand totals to "+dealer.handTotal());
+
+      player.addToHand(draw(deck,player));
+      player.addToHand(draw(deck,player));
+      System.out.println("Your hand totals to "+player.handTotal());
+
+      //players turn
+      System.out.println("Would you like to hit? Y for yes, N for no");
+      hitCheck = "y";
+      while(hitCheck.equals("Y") || hitCheck.equals("y")){
+        if(player.handTotal() > 21) break;
+        hitCheck = keyboard.nextLine();
+        player.addToHand(draw(deck,player));
+        System.out.println("Your hand totals to "+player.handTotal());
+      }
+
+      //dealer tries to win
+      while(dealer.handTotal() < player.handTotal() && dealer.handTotal() < 21){
+        if(player.handTotal() > 21) break;
+        dealer.addToHand((draw(deck,player)));
+        System.out.println("The dealer's hand totals to "+dealer.handTotal());
+      }
+
+      //results
+      if(player.handTotal()>21 || (dealer.handTotal() > player.handTotal() && dealer.handTotal()<22)){
+        System.out.println("You have lost this hand. Sorry!");
+        System.out.println("Current balance after loss: "+player.balance);
+      }
+      if(dealer.handTotal()>21 || (player.handTotal() > dealer.handTotal() && player.handTotal()<22)){
+        System.out.println("You have won this hand. Congrats!");
+        System.out.println("You have won "+gamble*2+" chips.");
+        player.winning(gamble);
+        System.out.println("Current balance after winning: "+player.balance);
+      }
+      if(dealer.handTotal() == player.handTotal()){
+        System.out.println("It is a draw.");
+        System.out.println("You have not won nor lost money.");
+        player.winning((int)(gamble/2));
+      }
     }
     //game end
     if(player.balance < 0) System.out.println("You have run out of balance, please add more");
     System.out.println("Thank you for playing, your balance will be saved, please play again.");
     player.logout();
-
   }
 }
